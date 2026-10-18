@@ -1,14 +1,15 @@
-
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
       debugShowCheckedModeBanner: false,
       home: HotelMenu(),
     );
@@ -16,12 +17,13 @@ class MyApp extends StatelessWidget {
 }
 
 class HotelMenu extends StatefulWidget {
+  const HotelMenu({super.key});
+
   @override
   State<HotelMenu> createState() => _HotelMenuState();
 }
 
 class _HotelMenuState extends State<HotelMenu> {
-
   List<String> names = [
     'Pizza',
     'Burger',
@@ -55,6 +57,9 @@ class _HotelMenuState extends State<HotelMenu> {
 
   List<bool> selected = List<bool>.filled(10, false);
 
+  // Track expanded state for each item to show details with animation
+  List<bool> expanded = List<bool>.filled(10, false);
+
   int totalPrice() {
     int total = 0;
 
@@ -71,15 +76,14 @@ class _HotelMenuState extends State<HotelMenu> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('My Hotel Menu'),
+        title: const Text('My Hotel Menu'),
         backgroundColor: Colors.brown,
         foregroundColor: Colors.white,
       ),
 
       body: Column(
         children: [
-
-          Padding(
+          const Padding(
             padding: EdgeInsets.all(15),
             child: Text(
               'Select Your Favourite Food',
@@ -93,41 +97,159 @@ class _HotelMenuState extends State<HotelMenu> {
           Expanded(
             child: ListView.builder(
               itemCount: names.length,
-
               itemBuilder: (context, index) {
                 return Card(
-                  margin: EdgeInsets.all(8),
+                  margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  elevation: expanded[index] ? 4 : 2,
+                  child: InkWell(
+                    onTap: () {
+                      setState(() {
+                        // Toggle item detail expansion on tap
+                        expanded[index] = !expanded[index];
+                      });
+                    },
+                    child: Column(
+                      children: [
+                        ListTile(
+                          // Animated image size increase on click
+                          leading: AnimatedContainer(
+                            duration: const Duration(seconds: 5),
+                            curve: Curves.easeInOut,
+                            width: expanded[index] ? 100 : 70,
+                            height: expanded[index] ? 100 : 70,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.network(
+                                pictures[index],
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return const Icon(Icons.restaurant, size: 50);
+                                },
+                              ),
+                            ),
+                          ),
 
-                  child: ListTile(
-                    leading: Image.network(
-                      pictures[index],
-                      width: 70,
-                      height: 70,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Icon(Icons.restaurant, size: 50);
-                      },
-                    ),
+                          title: Row(
+                            children: [
+                              Text(
+                                names[index],
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Icon(
+                                expanded[index]
+                                    ? Icons.keyboard_arrow_up
+                                    : Icons.keyboard_arrow_down,
+                                size: 20,
+                                color: Colors.brown,
+                              ),
+                            ],
+                          ),
 
-                    title: Text(
-                      names[index],
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Price: Rs. ${prices[index]}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.brown,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
 
-                    subtitle: Text(
-                      'Price: Rs. ${prices[index]}',
-                    ),
+                              // ANIMATION 1: AnimatedCrossFade (5 seconds)
+                              AnimatedCrossFade(
+                                duration: const Duration(seconds: 5),
+                                crossFadeState: expanded[index]
+                                    ? CrossFadeState.showSecond
+                                    : CrossFadeState.showFirst,
+                                firstChild: const Row(
+                                  children: [
+                                    Icon(Icons.touch_app, size: 14, color: Colors.grey),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      'Tap item to see details',
+                                      style: TextStyle(fontSize: 11, color: Colors.grey),
+                                    ),
+                                  ],
+                                ),
+                                secondChild: const Row(
+                                  children: [
+                                    Icon(Icons.restaurant_menu, size: 14, color: Colors.brown),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      'Showing Full Details Below',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.brown,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
 
-                    trailing: Checkbox(
-                      value: selected[index],
+                          trailing: Checkbox(
+                            value: selected[index],
+                            onChanged: (value) {
+                              setState(() {
+                                selected[index] = value!;
+                              });
+                            },
+                          ),
+                        ),
 
-                      onChanged: (value) {
-                        setState(() {
-                          selected[index] = value!;
-                        });
-                      },
+                        // ANIMATION 2: AnimatedContainer for expanding detail box (5 seconds)
+                        AnimatedContainer(
+                          duration: const Duration(seconds: 5),
+                          curve: Curves.easeInOut,
+                          height: expanded[index] ? 80 : 0,
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.brown.shade50,
+                            borderRadius: const BorderRadius.only(
+                              bottomLeft: Radius.circular(8),
+                              bottomRight: Radius.circular(8),
+                            ),
+                          ),
+                          child: ClipRect(
+                            child: SingleChildScrollView(
+                              physics: const NeverScrollableScrollPhysics(),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // ANIMATION 3: AnimatedOpacity applied on click to fade in item details
+                                  AnimatedOpacity(
+                                    duration: const Duration(seconds: 5),
+                                    opacity: expanded[index] ? 1.0 : 0.0,
+                                    curve: Curves.easeInOut,
+                                    child: Row(
+                                      children: [
+                                        const Icon(Icons.info_outline, color: Colors.brown, size: 20),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            'Item Detail: Freshly prepared delicious ${names[index]}. Special hotel recipe served hot and fresh!',
+                                            style: const TextStyle(
+                                              fontSize: 13,
+                                              color: Colors.brown,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 );
@@ -136,26 +258,23 @@ class _HotelMenuState extends State<HotelMenu> {
           ),
 
           Padding(
-            padding: EdgeInsets.all(15),
-
+            padding: const EdgeInsets.all(15),
             child: Column(
               children: [
-
                 Text(
                   'Total Price: Rs. ${totalPrice()}',
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
                     color: Colors.brown,
                   ),
                 ),
 
-                SizedBox(height: 10),
+                const SizedBox(height: 10),
 
                 SizedBox(
                   width: double.infinity,
                   height: 50,
-
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.brown,
@@ -173,24 +292,21 @@ class _HotelMenuState extends State<HotelMenu> {
 
                       if (order.isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
+                          const SnackBar(
                             content: Text('Please select some food!'),
                           ),
                         );
                       } else {
                         showDialog(
                           context: context,
-
                           builder: (context) {
                             return AlertDialog(
-                              title: Text('Order Placed!'),
-
+                              title: const Text('Order Placed!'),
                               content: Text(
                                 'Your selected items:\n\n'
-                                    '${order.join('\n')}\n\n'
-                                    'Total: Rs. ${totalPrice()}',
+                                '${order.join('\n')}\n\n'
+                                'Total: Rs. ${totalPrice()}',
                               ),
-
                               actions: [
                                 TextButton(
                                   onPressed: () {
@@ -203,8 +319,7 @@ class _HotelMenuState extends State<HotelMenu> {
                                       );
                                     });
                                   },
-
-                                  child: Text('OK'),
+                                  child: const Text('OK'),
                                 ),
                               ],
                             );
@@ -213,7 +328,7 @@ class _HotelMenuState extends State<HotelMenu> {
                       }
                     },
 
-                    child: Text(
+                    child: const Text(
                       'Place Order',
                       style: TextStyle(fontSize: 18),
                     ),
